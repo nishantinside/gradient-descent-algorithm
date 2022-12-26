@@ -1,0 +1,123 @@
+import numpy as np
+from numpy.random import default_rng 
+import matplotlib.pyplot as plt
+import statistics as st
+
+from sklearn.datasets import load_iris 
+iris=load_iris()
+
+from sklearn.model_selection import train_test_split as tts
+x_train,x_test,y_train,y_test=tts(iris['data'],iris['target'],random_state=239)
+l=list(iris['data'])                                         #we are working with iris dataset that is inbuilt dataset
+
+
+#calculating distance
+def index_of_1nn(l,x_new):
+    
+    dist=[] 
+    for i in range(len(l)):
+        ld=l[i]-x_new
+        distance=np.sqrt(np.sum([ld[i]*ld[i] for i in range(len(ld))]))  #distance bw 2nd item and test sample
+        dist.append(distance)
+        
+    return dist
+    
+    
+#giving k nearest values with their index 
+
+def knn(k,dist_index):
+    
+    klist=[]
+    for i in range(k):
+        n_dist_index=dist_index
+        
+        minn=min(n_dist_index,key=lambda x:x[1])
+        klist.append(minn)
+        
+        n_dist_index.remove(minn)
+        
+    return klist      
+    
+    
+    
+#fn for finding error 
+def error(prediction_list,y_test):
+    count=0
+    
+    if len(prediction_list)==len(y_test):
+            for i in range(len(prediction_list)):
+                 if prediction_list[i]==y_test[i]:
+                    count+=1
+    else:
+        a=min(len(prediction_list),len(y_test))
+        for i in range(a):
+            if prediction_list[i]==y_test[i]:
+                count+=1
+    error=(count/len(prediction_list))*100
+    return error
+
+#main program for iris as it is a default model for knn  for iris data
+k=int(input('enter value of k  ='))
+pred_list=[]
+for i in range(len(x_test)):
+    x_new=x_test[i]
+    dist=index_of_1nn(l,x_new)
+    dist_index=[]
+    dist_index.append([[i,dist[i] ]for i in range(len(dist))])
+    flat_dist_index = [item for sublist in dist_index for item in sublist]
+    klist=knn(k,flat_dist_index)
+    #print(klist)
+    m=[]
+    for j in range(len(klist)):
+        m.append([klist[j][0]])  
+    #print(m)
+    n_label=[]
+    flat_m = [item for sublist in m for item in sublist]
+    flat_m = [int(item) for item in flat_m]
+    prediction=st.mode([iris['target'][i] for i in flat_m])
+    
+    
+    pred_list.append(prediction)
+    prediction_list=pred_list[:38]
+#print(prediction)    
+print('the predicted labels by our model are',prediction_list)
+
+
+
+#main program for default k values for ionosphere data for k=3
+#we preprocessed the data by subtracting mean from every value as we centred the data 
+k=int(input('enter value of k'))
+x1=np.genfromtxt('ionosphere.txt', delimiter=',',usecols=np.arange(34))
+y=np.genfromtxt('ionosphere.txt',delimiter=',',usecols=34,dtype='int')
+x_mean=np.mean(x1)
+x=x1-x_mean
+
+from sklearn.model_selection import train_test_split as tts
+x_train,x_test,y_train,y_test=tts(x,y,random_state=0)
+print(len(y_test))
+#print(len(x_train))
+pred_list=[]
+for i in range(len(x_test)):
+    x_new=x_test[i]
+    dist=index_of_1nn(x_train,x_new)
+    dist_index=[]
+    dist_index.append([[i,dist[i] ]for i in range(len(dist))])
+    flat_dist_index = [item for sublist in dist_index for item in sublist]
+    klist=knn(k,flat_dist_index)
+    m=[]
+    for j in range(len(klist)):
+        m.append([klist[j][0]])  
+    #print(m)
+    flat_m = [item for sublist in m for item in sublist]
+    prediction=st.mode([y[i]for i in flat_m])
+    pred_list.append(prediction)
+    prediction_list=pred_list[:88]
+    
+    
+    
+print('prediction of model after pre processing of data  for k=3 is  ',pred_list)
+    #print(klist)
+    #print(flat_dist_index)    
+    
+err=error(prediction_list,y_test)
+print('accuracy of model after pre processing of data  for k=3 is ',err)    
